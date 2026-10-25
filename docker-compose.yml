@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: trustvault-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trustvault
+      POSTGRES_USER: trustvault_admin
+      POSTGRES_PASSWORD: TrustVaultSecureDbPassword2026!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustvault_admin -d trustvault"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trustvault-net
+
+  api:
+    build:
+      context: .
+      dockerfile: src/TrustVault.Api/Dockerfile
+    container_name: trustvault-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=trustvault;Username=trustvault_admin;Password=TrustVaultSecureDbPassword2026!;"
+      Storage__LocalPath: /var/trustvault/storage
+      Storage__MaxFileSizeBytes: "26214400"
+      TRUSTVAULT_ADMIN_EMAIL: "admin@trustvault.local"
+      TRUSTVAULT_ADMIN_PASSWORD: "Admin@TrustVault2026!"
+    volumes:
+      - vault_storage:/var/trustvault/storage
+    ports:
+      - "5000:5000"
+    networks:
+      - trustvault-net
+
+  ui:
+    build:
+      context: ./src/trustvault-ui
+      dockerfile: Dockerfile
+    container_name: trustvault-ui
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    networks:
+      - trustvault-net
+
+volumes:
+  postgres_data:
+  vault_storage:
+
+networks:
+  trustvault-net:
+    driver: bridge

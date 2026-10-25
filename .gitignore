@@ -1,0 +1,24 @@
+# .NET build artifacts
+bin/
+obj/
+.dotnet_home/
+TestResults/
+
+# Database & local storage
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+vault_storage/
+
+# Node & Angular
+node_modules/
+dist/
+.angular/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo

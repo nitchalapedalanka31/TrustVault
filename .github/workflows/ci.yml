@@ -1,0 +1,62 @@
+name: TrustVault DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-tests:
+    name: Backend Build & Automated Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore NuGet Packages
+      run: dotnet restore TrustVault.sln
+
+    - name: Build Solution (Release)
+      run: dotnet build TrustVault.sln -c Release --no-restore
+
+    - name: Run Security Integration Tests
+      run: dotnet test tests/TrustVault.Tests/TrustVault.Tests.csproj -c Release --no-build --verbosity normal --logger "trx;LogFileName=security_tests.trx"
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: "**/TestResults/*.trx"
+
+  frontend-build:
+    name: Frontend Build & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: 'src/trustvault-ui/package-lock.json'
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd src/trustvault-ui
+        npm ci
+
+    - name: Angular Production Build
+      run: |
+        cd src/trustvault-ui
+        npm run build -- --configuration=production
