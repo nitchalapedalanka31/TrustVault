@@ -22,3 +22,20 @@ dist/
 .idea/
 *.user
 *.suo
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.local.json
+
+# Logs
+
+*.log
+
+# Python virtual environments
+
+venv/
+.venv/
+pycache/
